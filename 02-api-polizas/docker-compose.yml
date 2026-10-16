@@ -1,0 +1,24 @@
+# Backend (H2 en memoria) + frontend con un solo comando:
+#   docker compose up --build
+# Frontend: http://localhost:4200   ·   Swagger: http://localhost:8080/swagger-ui.html
+# Puertos configurables: WEB_PORT (frontend) y API_PORT (backend).
+# Para usar Oracle, ver backend/docker-compose.yml.
+name: polizas
+
+services:
+  backend:
+    build: ./backend
+    environment:
+      API_KEY: ${API_KEY:-123456}
+    ports:
+      - "${API_PORT:-8080}:8080"
+
+  frontend:
+    build: ./frontend
+    environment:
+      # Nombre del servicio en la red de Compose: nginx reenvía /api al backend
+      BACKEND_URL: http://backend:8080
+    ports:
+      - "${WEB_PORT:-4200}:80"
+    depends_on:
+      - backend
