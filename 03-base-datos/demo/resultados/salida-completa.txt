@@ -1,0 +1,503 @@
+Demo Módulo 3 · 2026-10-15 22:19 · orders=2000000 customers=100000
+Oracle: 
+SQL*Plus: Release 23.26.3.0.0 - Production
+Version 23.26.3.0.0
+Usuario demo_perf creado en FREEPDB1
+==== Esquema ====
+Elapsed: 00:00:00.15
+Elapsed: 00:00:00.01
+==== Datos: 100000 customers ====
+Elapsed: 00:00:00.01
+Elapsed: 00:00:01.60
+Elapsed: 00:00:00.14
+==== Datos: 2000000 orders ====
+Elapsed: 00:00:22.76
+Elapsed: 00:00:00.02
+==== Estadísticas iniciales SIN histogramas (SIZE 1): el optimizador asume distribución uniforme ====
+Elapsed: 00:00:01.23
+==== Tamaño de los segmentos ====
+
+SEGMENT_NAME		       SEGMENT_TYPE		  MB	 BLOCKS
+------------------------------ ------------------ ---------- ----------
+CUSTOMERS		       TABLE			  20	   2560
+ORDERS			       TABLE			 312	  39936
+PK_CUSTOMERS		       INDEX			   2	    256
+PK_ORDERS		       INDEX			  31	   3968
+No errors.
+Instrumento de medición creado
+######## Distribución real de países ########
+
+COUNTRY 	 CUSTOMERS	  PCT
+--------------- ---------- ----------
+Colombia	     45192	45.19
+México               19027      19.03
+Perú                 10069      10.07
+Chile		      7901	  7.9
+Ecuador 	      6859	 6.86
+Argentina	      4927	 4.93
+Panamá                2961       2.96
+Costa Rica	      2039	 2.04
+Mexico		       644	  .64
+MEXICO		       381	  .38
+######## E0 · Línea base: solo PK, estadísticas SIN histograma ########
+
+================ Plan real: E0_MX ================
+
+PLAN_TABLE_OUTPUT
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SQL_ID	48fyxrz3uqzd1, child number 0
+-------------------------------------
+SELECT /*+ gather_plan_statistics */ /* E0_MX */ o.order_id,
+o.order_date, c.customer_name, o.total_amount FROM orders o JOIN
+customers c ON o.customer_id = c.customer_id WHERE c.country = 'México'
+
+Plan hash value: 3042513348
+
+---------------------------------------------------------------------------------------------------------------------
+| Id  | Operation	   | Name      | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+---------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT   |	       |      1 |	 |    379K|00:00:00.14 |   42073 |	 |	 |	    |
+|*  1 |  HASH JOIN	   |	       |      1 |    198K|    379K|00:00:00.14 |   42073 |  2370K|  1896K| 2204K (0)|
+|*  2 |   TABLE ACCESS FULL| CUSTOMERS |      1 |  10000 |  19027 |00:00:00.01 |    2510 |	 |	 |	    |
+|   3 |   TABLE ACCESS FULL| ORDERS    |      1 |   2000K|   2000K|00:00:00.10 |   39563 |	 |	 |	    |
+---------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - access("O"."CUSTOMER_ID"="C"."CUSTOMER_ID")
+   2 - filter("C"."COUNTRY"='México')
+
+
+================ Plan real: E0_CR ================
+
+PLAN_TABLE_OUTPUT
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SQL_ID	9uumwy9nunq2t, child number 0
+-------------------------------------
+SELECT /*+ gather_plan_statistics */ /* E0_CR */ o.order_id,
+o.order_date, c.customer_name, o.total_amount FROM orders o JOIN
+customers c ON o.customer_id = c.customer_id WHERE c.country = 'Costa
+Rica'
+
+Plan hash value: 3042513348
+
+---------------------------------------------------------------------------------------------------------------------
+| Id  | Operation	   | Name      | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+---------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT   |	       |      1 |	 |  40959 |00:00:00.11 |   41740 |	 |	 |	    |
+|*  1 |  HASH JOIN	   |	       |      1 |    198K|  40959 |00:00:00.11 |   41740 |  1423K|  1423K| 1541K (0)|
+|*  2 |   TABLE ACCESS FULL| CUSTOMERS |      1 |  10000 |   2039 |00:00:00.01 |    2510 |	 |	 |	    |
+|   3 |   TABLE ACCESS FULL| ORDERS    |      1 |   2000K|   2000K|00:00:00.09 |   39230 |	 |	 |	    |
+---------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - access("O"."CUSTOMER_ID"="C"."CUSTOMER_ID")
+   2 - filter("C"."COUNTRY"='Costa Rica')
+
+######## E1 · Estadísticas con histograma de frecuencia en country ########
+
+COLUMN_NAME	NUM_DISTINCT HISTOGRAM
+--------------- ------------ ---------------
+COUNTRY 		  10 FREQUENCY
+
+================ Plan real: E1_MX ================
+
+PLAN_TABLE_OUTPUT
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SQL_ID	gak2gzrkj11j2, child number 0
+-------------------------------------
+SELECT /*+ gather_plan_statistics */ /* E1_MX */ o.order_id,
+o.order_date, c.customer_name, o.total_amount FROM orders o JOIN
+customers c ON o.customer_id = c.customer_id WHERE c.country = 'México'
+
+Plan hash value: 3042513348
+
+---------------------------------------------------------------------------------------------------------------------
+| Id  | Operation	   | Name      | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+---------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT   |	       |      1 |	 |    379K|00:00:00.15 |   42073 |	 |	 |	    |
+|*  1 |  HASH JOIN	   |	       |      1 |    377K|    379K|00:00:00.15 |   42073 |  2370K|  1896K| 2188K (0)|
+|*  2 |   TABLE ACCESS FULL| CUSTOMERS |      1 |  19027 |  19027 |00:00:00.01 |    2510 |	 |	 |	    |
+|   3 |   TABLE ACCESS FULL| ORDERS    |      1 |   2000K|   2000K|00:00:00.10 |   39563 |	 |	 |	    |
+---------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - access("O"."CUSTOMER_ID"="C"."CUSTOMER_ID")
+   2 - filter("C"."COUNTRY"='México')
+
+
+================ Plan real: E1_CR ================
+
+PLAN_TABLE_OUTPUT
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SQL_ID	9ugu0s16ta1rd, child number 0
+-------------------------------------
+SELECT /*+ gather_plan_statistics */ /* E1_CR */ o.order_id,
+o.order_date, c.customer_name, o.total_amount FROM orders o JOIN
+customers c ON o.customer_id = c.customer_id WHERE c.country = 'Costa
+Rica'
+
+Plan hash value: 3042513348
+
+---------------------------------------------------------------------------------------------------------------------
+| Id  | Operation	   | Name      | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+---------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT   |	       |      1 |	 |  40959 |00:00:00.12 |   41740 |	 |	 |	    |
+|*  1 |  HASH JOIN	   |	       |      1 |  40447 |  40959 |00:00:00.12 |   41740 |  1423K|  1423K| 1591K (0)|
+|*  2 |   TABLE ACCESS FULL| CUSTOMERS |      1 |   2039 |   2039 |00:00:00.01 |    2510 |	 |	 |	    |
+|   3 |   TABLE ACCESS FULL| ORDERS    |      1 |   2000K|   2000K|00:00:00.09 |   39230 |	 |	 |	    |
+---------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - access("O"."CUSTOMER_ID"="C"."CUSTOMER_ID")
+   2 - filter("C"."COUNTRY"='Costa Rica')
+
+######## E2 · Índices compuestos y cubrientes ########
+Elapsed: 00:00:00.09
+Elapsed: 00:00:02.19
+
+INDEX_NAME	       LEAF_BLOCKS   MB_APROX
+---------------------- ----------- ----------
+IX_CUSTOMERS_PAIS	       561	    4
+IX_ORDERS_CLIENTE	      9588	   75
+PK_CUSTOMERS		       187	    1
+PK_ORDERS		      3875	   30
+
+================ Plan real: E2_MX ================
+
+PLAN_TABLE_OUTPUT
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SQL_ID	gh8s7qjkfu7wb, child number 0
+-------------------------------------
+SELECT /*+ gather_plan_statistics */ /* E2_MX */ o.order_id,
+o.order_date, c.customer_name, o.total_amount FROM orders o JOIN
+customers c ON o.customer_id = c.customer_id WHERE c.country = 'México'
+
+Plan hash value: 1545747022
+
+--------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation	      | Name		  | Starts | E-Rows | A-Rows |	 A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+--------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT      | 		  |	 1 |	    |	 379K|00:00:00.17 |   10116 |	    |	    |	       |
+|*  1 |  HASH JOIN	      | 		  |	 1 |	377K|	 379K|00:00:00.17 |   10116 |  2378K|  1730K| 2150K (0)|
+|*  2 |   INDEX RANGE SCAN    | IX_CUSTOMERS_PAIS |	 1 |  19027 |  19027 |00:00:00.01 |	109 |	    |	    |	       |
+|   3 |   INDEX FAST FULL SCAN| IX_ORDERS_CLIENTE |	 1 |   2000K|	2000K|00:00:00.10 |   10007 |	    |	    |	       |
+--------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - access("O"."CUSTOMER_ID"="C"."CUSTOMER_ID")
+   2 - access("C"."COUNTRY"='México')
+
+
+================ Plan real: E2_CR ================
+
+PLAN_TABLE_OUTPUT
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SQL_ID	774daqxy6fkdd, child number 0
+-------------------------------------
+SELECT /*+ gather_plan_statistics */ /* E2_CR */ o.order_id,
+o.order_date, c.customer_name, o.total_amount FROM orders o JOIN
+customers c ON o.customer_id = c.customer_id WHERE c.country = 'Costa
+Rica'
+
+Plan hash value: 178870614
+
+-------------------------------------------------------------------------------------------------
+| Id  | Operation	  | Name	      | Starts | E-Rows | A-Rows |   A-Time   | Buffers |
+-------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT  |		      |      1 |	|  40959 |00:00:00.01 |    4413 |
+|   1 |  NESTED LOOPS	  |		      |      1 |  40447 |  40959 |00:00:00.01 |    4413 |
+|*  2 |   INDEX RANGE SCAN| IX_CUSTOMERS_PAIS |      1 |   2039 |   2039 |00:00:00.01 |      55 |
+|*  3 |   INDEX RANGE SCAN| IX_ORDERS_CLIENTE |   2039 |     20 |  40959 |00:00:00.01 |    4358 |
+-------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - access("C"."COUNTRY"='Costa Rica')
+   3 - access("O"."CUSTOMER_ID"="C"."CUSTOMER_ID")
+
+######## E3 · Particionamiento por rango de order_date (consulta acotada al último trimestre) ########
+Elapsed: 00:00:02.23
+Elapsed: 00:00:02.40
+
+PARTICIONES
+-----------
+	 49
+
+================ Plan real: E3_FECHA_SIN_PART ================
+
+PLAN_TABLE_OUTPUT
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SQL_ID	7qgvmh4bargwv, child number 0
+-------------------------------------
+SELECT /*+ gather_plan_statistics */ /* E3_FECHA_SIN_PART */
+o.order_id, o.order_date, c.customer_name, o.total_amount FROM orders o
+JOIN customers c ON o.customer_id = c.customer_id WHERE c.country =
+'México' AND o.order_date >= DATE '2025-10-01'
+
+Plan hash value: 1545747022
+
+--------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation	      | Name		  | Starts | E-Rows | A-Rows |	 A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+--------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT      | 		  |	 1 |	    |  24143 |00:00:00.08 |    9761 |	    |	    |	       |
+|*  1 |  HASH JOIN	      | 		  |	 1 |  32803 |  24143 |00:00:00.08 |    9761 |  2378K|  1730K| 2140K (0)|
+|*  2 |   INDEX RANGE SCAN    | IX_CUSTOMERS_PAIS |	 1 |  19027 |  19027 |00:00:00.01 |	109 |	    |	    |	       |
+|*  3 |   INDEX FAST FULL SCAN| IX_ORDERS_CLIENTE |	 1 |	126K|	 125K|00:00:00.06 |    9652 |	    |	    |	       |
+--------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - access("O"."CUSTOMER_ID"="C"."CUSTOMER_ID")
+   2 - access("C"."COUNTRY"='México')
+   3 - filter("O"."ORDER_DATE">=TO_DATE(' 2025-10-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+
+
+================ Plan real: E3_FECHA_PART ================
+
+PLAN_TABLE_OUTPUT
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SQL_ID	6kh4tz4ugq6b7, child number 0
+-------------------------------------
+SELECT /*+ gather_plan_statistics */ /* E3_FECHA_PART */ o.order_id,
+o.order_date, c.customer_name, o.total_amount FROM orders_part o JOIN
+customers c ON o.customer_id = c.customer_id WHERE c.country = 'México'
+AND o.order_date >= DATE '2025-10-01'
+
+Plan hash value: 2534402129
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation		  | Name		   | Starts | E-Rows | A-Rows |   A-Time   | Buffers |	OMem |	1Mem | Used-Mem |
+-----------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT	  |			   |	  1 |	     |	24143 |00:00:00.02 |	 758 |	     |	     |		|
+|*  1 |  HASH JOIN		  |			   |	  1 |  32803 |	24143 |00:00:00.02 |	 758 |	2378K|	1730K| 2041K (0)|
+|*  2 |   INDEX RANGE SCAN	  | IX_CUSTOMERS_PAIS	   |	  1 |  19027 |	19027 |00:00:00.01 |	 109 |	     |	     |		|
+|   3 |   PARTITION RANGE ITERATOR|			   |	  1 |	 126K|	  125K|00:00:00.01 |	 649 |	     |	     |		|
+|   4 |    INDEX FAST FULL SCAN   | IX_ORDERS_PART_CLIENTE |	  3 |	 126K|	  125K|00:00:00.01 |	 649 |	     |	     |		|
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - access("O"."CUSTOMER_ID"="C"."CUSTOMER_ID")
+   2 - access("C"."COUNTRY"='México')
+
+######## E4 · Vista materializada con refresco FAST (MV logs) ########
+Elapsed: 00:00:00.03
+Elapsed: 00:00:00.00
+Elapsed: 00:00:02.82
+Elapsed: 00:00:01.81
+
+================ Plan real: E4_MV_MX ================
+
+PLAN_TABLE_OUTPUT
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SQL_ID	4q3jagtnhc551, child number 0
+-------------------------------------
+SELECT /*+ gather_plan_statistics */ /* E4_MV_MX */ order_id,
+order_date, customer_name, total_amount FROM mv_ordenes_cliente WHERE
+country = 'México'
+
+Plan hash value: 2010554615
+
+--------------------------------------------------------------------------------------------------------------
+| Id  | Operation	     | Name		  | Starts | E-Rows | A-Rows |	 A-Time   | Buffers | Reads  |
+--------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT     |			  |	 1 |	    |	 379K|00:00:00.06 |   19737 |  19359 |
+|*  1 |  MAT_VIEW ACCESS FULL| MV_ORDENES_CLIENTE |	 1 |	200K|	 379K|00:00:00.06 |   19737 |  19359 |
+--------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - filter("COUNTRY"='México')
+
+
+================ Plan real: E4_MV_CR ================
+
+PLAN_TABLE_OUTPUT
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SQL_ID	fnp69b411dc1s, child number 0
+-------------------------------------
+SELECT /*+ gather_plan_statistics */ /* E4_MV_CR */ order_id,
+order_date, customer_name, total_amount FROM mv_ordenes_cliente WHERE
+country = 'Costa Rica'
+
+Plan hash value: 2010554615
+
+--------------------------------------------------------------------------------------------------------------
+| Id  | Operation	     | Name		  | Starts | E-Rows | A-Rows |	 A-Time   | Buffers | Reads  |
+--------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT     |			  |	 1 |	    |  40959 |00:00:00.04 |   19400 |  19359 |
+|*  1 |  MAT_VIEW ACCESS FULL| MV_ORDENES_CLIENTE |	 1 |	200K|  40959 |00:00:00.04 |   19400 |  19359 |
+--------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - filter("COUNTRY"='Costa Rica')
+
+== Refresco FAST tras insertar una orden nueva ==
+Elapsed: 00:00:00.28
+
+ORDEN_NUEVA_EN_MV
+-----------------
+		1
+
+MVIEW_NAME	     LAST_REF STALENESS
+-------------------- -------- -------------------
+MV_ORDENES_CLIENTE   FAST     FRESH
+######## E5 · Paginación: OFFSET profundo frente a keyset (páginas de 50 filas) ########
+Elapsed: 00:00:05.25
+
+================ Plan real: E5_PAGINA_1 ================
+
+PLAN_TABLE_OUTPUT
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SQL_ID	5r8vctpvx1jvz, child number 0
+-------------------------------------
+SELECT /*+ gather_plan_statistics */ /* E5_PAGINA_1 */ o.order_id,
+o.order_date, c.customer_name, o.total_amount FROM orders o JOIN
+customers c ON o.customer_id = c.customer_id WHERE c.country = 'México'
+ORDER BY o.order_date DESC, o.order_id DESC FETCH FIRST 50 ROWS ONLY
+
+Plan hash value: 1327534728
+
+------------------------------------------------------------------------------------------------------------
+| Id  | Operation		       | Name		 | Starts | E-Rows | A-Rows |	A-Time	 | Buffers |
+------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT	       |		 |	1 |	   |	 50 |00:00:00.01 |     518 |
+|*  1 |  COUNT STOPKEY		       |		 |	1 |	   |	 50 |00:00:00.01 |     518 |
+|   2 |   VIEW			       |		 |	1 |	50 |	 50 |00:00:00.01 |     518 |
+|   3 |    NESTED LOOPS 	       |		 |	1 |	50 |	 50 |00:00:00.01 |     518 |
+|   4 |     NESTED LOOPS	       |		 |	1 |    265 |	256 |00:00:00.01 |     262 |
+|   5 |      INDEX FULL SCAN DESCENDING| IX_ORDERS_FECHA |	1 |   2000K|	256 |00:00:00.01 |	 4 |
+|*  6 |      INDEX UNIQUE SCAN	       | PK_CUSTOMERS	 |    256 |	 1 |	256 |00:00:00.01 |     258 |
+|*  7 |     TABLE ACCESS BY INDEX ROWID| CUSTOMERS	 |    256 |	 1 |	 50 |00:00:00.01 |     256 |
+------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - filter(ROWNUM<=50)
+   6 - access("O"."CUSTOMER_ID"="C"."CUSTOMER_ID")
+   7 - filter("C"."COUNTRY"='México')
+
+
+================ Plan real: E5_OFFSET_10000 ================
+
+PLAN_TABLE_OUTPUT
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SQL_ID	79syfwrd6rffc, child number 0
+-------------------------------------
+SELECT /*+ gather_plan_statistics */ /* E5_OFFSET_10000 */ o.order_id,
+o.order_date, c.customer_name, o.total_amount FROM orders o JOIN
+customers c ON o.customer_id = c.customer_id WHERE c.country = 'México'
+ORDER BY o.order_date DESC, o.order_id DESC OFFSET 10000 ROWS FETCH
+NEXT 50 ROWS ONLY
+
+Plan hash value: 1599232647
+
+-----------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation		 | Name 	     | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+-----------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT	 |		     |	    1 |        |     50 |00:00:00.22 |	  9737 |       |       |	  |
+|*  1 |  VIEW			 |		     |	    1 |  10050 |     50 |00:00:00.22 |	  9737 |       |       |	  |
+|*  2 |   WINDOW SORT PUSHED RANK|		     |	    1 |    377K|  10050 |00:00:00.22 |	  9737 |  3171K|   785K| 2818K (0)|
+|*  3 |    HASH JOIN		 |		     |	    1 |    377K|    379K|00:00:00.17 |	  9737 |  2506K|  1486K| 2348K (0)|
+|*  4 |     INDEX RANGE SCAN	 | IX_CUSTOMERS_PAIS |	    1 |  19027 |  19027 |00:00:00.01 |	   109 |       |       |	  |
+|   5 |     INDEX FAST FULL SCAN | IX_ORDERS_CLIENTE |	    1 |   2000K|   2000K|00:00:00.11 |	  9628 |       |       |	  |
+-----------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - filter(("from$_subquery$_004"."rowlimit_$$_rownumber"<=10050 AND
+	      "from$_subquery$_004"."rowlimit_$$_rownumber">10000))
+   2 - filter(ROW_NUMBER() OVER ( ORDER BY "O"."ORDER_DATE" DESC ,"O"."ORDER_ID" DESC )<=10050)
+   3 - access("O"."CUSTOMER_ID"="C"."CUSTOMER_ID")
+   4 - access("C"."COUNTRY"='México')
+
+
+ULT_FECHA      ULT_ID
+---------- ----------
+2025-11-23    1244142
+
+================ Plan real: E5_KEYSET_201 ================
+
+PLAN_TABLE_OUTPUT
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SQL_ID	c65zggpf5dph1, child number 0
+-------------------------------------
+SELECT /*+ gather_plan_statistics */ /* E5_KEYSET_201 */ o.order_id,
+o.order_date, c.customer_name, o.total_amount FROM orders o JOIN
+customers c ON o.customer_id = c.customer_id WHERE c.country = 'México'
+AND o.order_date <= DATE '2025-11-23' AND (o.order_date < DATE
+'2025-11-23' OR o.order_id <	1244142) ORDER BY o.order_date DESC,
+o.order_id DESC FETCH FIRST 50 ROWS ONLY
+
+Plan hash value: 2824143367
+
+-------------------------------------------------------------------------------------------------------------
+| Id  | Operation			| Name		  | Starts | E-Rows | A-Rows |	 A-Time   | Buffers |
+-------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT		|		  |	 1 |	    |	  50 |00:00:00.01 |	502 |
+|*  1 |  COUNT STOPKEY			|		  |	 1 |	    |	  50 |00:00:00.01 |	502 |
+|   2 |   VIEW				|		  |	 1 |	 50 |	  50 |00:00:00.01 |	502 |
+|   3 |    NESTED LOOPS 		|		  |	 1 |	 50 |	  50 |00:00:00.01 |	502 |
+|   4 |     NESTED LOOPS		|		  |	 1 |	272 |	 247 |00:00:00.01 |	255 |
+|*  5 |      INDEX RANGE SCAN DESCENDING| IX_ORDERS_FECHA |	 1 |   1930K|	 247 |00:00:00.01 |	  6 |
+|*  6 |      INDEX UNIQUE SCAN		| PK_CUSTOMERS	  |    247 |	  1 |	 247 |00:00:00.01 |	249 |
+|*  7 |     TABLE ACCESS BY INDEX ROWID | CUSTOMERS	  |    247 |	  1 |	  50 |00:00:00.01 |	247 |
+-------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - filter(ROWNUM<=50)
+   5 - access("O"."ORDER_DATE"<=TO_DATE(' 2025-11-23 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+       filter(("O"."ORDER_DATE"<TO_DATE(' 2025-11-23 00:00:00', 'syyyy-mm-dd hh24:mi:ss') OR
+	      "O"."ORDER_ID"<1244142))
+   6 - access("O"."CUSTOMER_ID"="C"."CUSTOMER_ID")
+   7 - filter("C"."COUNTRY"='México')
+
+######## E6 · Calidad de datos: variantes de "México" ########
+
+COUNTRY 	 CUSTOMERS     ORDERS
+--------------- ---------- ----------
+México               19027     379646
+Mexico		       644	12745
+MEXICO		       381	 7626
+== Normalización: código ISO 3166-1 alfa-2 ==
+
+CUSTOMERS_MX_POR_CODIGO CUSTOMERS_POR_TEXTO_EXACTO
+----------------------- --------------------------
+		  20052 		     19027
+######## RESUMEN (mediana de 5 ejecuciones medidas, tras 1 de calentamiento) ########
+
+ETIQUETA		   REPS MS_MEDIANA     MS_MIN	  MS_MAX LECTURAS_LOGICAS      FILAS
+-------------------- ---------- ---------- ---------- ---------- ---------------- ----------
+E0_MX			      5        226	  222	     235	    42073     379645
+E0_CR			      5        134	  126	     143	    41740      40959
+E1_MX			      5        231	  226	     238	    42073     379645
+E1_CR			      5        133	  131	     138	    41740      40959
+E2_MX			      5        239	  234	     240	    10116     379645
+E2_CR			      5 	19	   18	      24	     4413      40959
+E3_FECHA_SIN_PART	      5 	81	   80	     107	     9761      24143
+E3_FECHA_PART		      5 	22	   22	      25	      758      24143
+E4_MV_MX		      5        126	  124	     128	    19737     379645
+E4_MV_CR		      5 	49	   46	      56	    19400      40959
+E5_PAGINA_1		      5 	 0	    0	       1	      518	  50
+E5_OFFSET_10000 	      5        220	  219	     221	     9737	  50
+E5_KEYSET_201		      5 	 0	    0	       1	      502	  50
