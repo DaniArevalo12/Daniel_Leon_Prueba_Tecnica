@@ -1,0 +1,111 @@
+erDiagram
+    %% Modelo lógico. Las relaciones entre entidades de servicios distintos son FK lógicas (sin FK física).
+
+    PERSONA ||--o{ POLIZA : "es tomador de"
+    POLIZA ||--o{ RIESGO : "asegura (lógica, otro servicio)"
+    PERSONA ||--o{ RIESGO : "es asegurado (arrendatario)"
+    PERSONA ||--o{ RIESGO : "es beneficiario (arrendador)"
+    POLIZA ||--o{ HISTORIAL_RENOVACION : "registra"
+    POLIZA ||--o{ EVENTO_OUTBOX : "origina"
+    RIESGO ||--o{ EVENTO_OUTBOX : "origina"
+    POLIZA ||--o{ NOTIFICACION : "genera (lógica)"
+    POLIZA ||--o{ AUDITORIA_CORE : "se sincroniza (lógica)"
+    POLIZA ||--|| POLIZA_PROYECCION : "se replica en Riesgos"
+
+    PERSONA {
+        bigint id PK
+        varchar tipo_documento "CC, NIT, CE"
+        varchar numero_documento UK "UK con tipo_documento"
+        varchar nombre
+        varchar email "dato personal, cifrado en reposo"
+        varchar telefono "dato personal, cifrado en reposo"
+    }
+
+    POLIZA {
+        bigint id PK
+        varchar numero UK "POL-000001, por secuencia"
+        varchar tipo "INDIVIDUAL o COLECTIVA"
+        varchar estado "ACTIVA, RENOVADA, CANCELADA"
+        bigint tomador_id FK
+        date fecha_inicio_vigencia
+        date fecha_fin_vigencia
+        int meses_vigencia "mayor que 0"
+        decimal valor_canon "NUMBER(15,2), mayor que 0"
+        decimal valor_prima "canon por meses"
+        varchar estado_sync_core "PENDIENTE, SINCRONIZADO, RECHAZADO"
+        bigint version "bloqueo optimista"
+        timestamp fecha_creacion
+        timestamp fecha_actualizacion
+    }
+
+    RIESGO {
+        bigint id PK
+        bigint poliza_id "FK lógica a POLIZA"
+        varchar direccion_inmueble
+        bigint asegurado_id "FK lógica a PERSONA (arrendatario)"
+        bigint beneficiario_id "FK lógica a PERSONA (arrendador)"
+        varchar estado "ACTIVO o CANCELADO"
+        varchar estado_sync_core "PENDIENTE, SINCRONIZADO, RECHAZADO"
+        bigint version
+        timestamp fecha_creacion
+        timestamp fecha_actualizacion
+    }
+
+    POLIZA_PROYECCION {
+        bigint poliza_id PK "copia de lectura en BD Riesgos"
+        varchar tipo
+        varchar estado
+        bigint tomador_id
+        bigint version_origen "descarta eventos viejos"
+    }
+
+    HISTORIAL_RENOVACION {
+        bigint id PK
+        bigint poliza_id FK
+        date nueva_fecha_inicio "UK con poliza_id: idempotencia"
+        date nueva_fecha_fin
+        decimal ipc_aplicado
+        decimal canon_anterior
+        decimal canon_nuevo
+        decimal prima_anterior
+        decimal prima_nueva
+        varchar origen "AUTOMATICA o MANUAL"
+        timestamp fecha_renovacion
+    }
+
+    EVENTO_OUTBOX {
+        uuid id PK "también idempotency key hacia el CORE"
+        varchar tipo_agregado "POLIZA o RIESGO"
+        bigint id_agregado "clave de partición en Kafka"
+        varchar tipo_evento "PolizaCreada, RiesgoAgregado, ..."
+        clob payload "JSON"
+        varchar estado "PENDIENTE o PUBLICADO"
+        varchar correlation_id
+        timestamp fecha_creacion
+        timestamp fecha_publicacion
+    }
+
+    NOTIFICACION {
+        bigint id PK
+        uuid evento_id UK "un envío por evento y canal"
+        varchar canal "EMAIL o SMS"
+        bigint poliza_id
+        varchar destinatario_enmascarado
+        varchar plantilla "CREACION o RENOVACION"
+        varchar estado "PENDIENTE, ENVIADA, FALLIDA"
+        int intentos
+        timestamp fecha_envio
+    }
+
+    AUDITORIA_CORE {
+        bigint id PK
+        uuid idempotency_key UK "id del evento de outbox"
+        varchar tipo_agregado
+        bigint id_agregado
+        varchar operacion "CREACION, RENOVACION, CANCELACION, RIESGO_AGREGADO, RIESGO_CANCELADO"
+        varchar estado "ENVIADO, SINCRONIZADO, REINTENTO, RECHAZADO, DLQ"
+        int intentos
+        varchar codigo_respuesta_core
+        varchar correlation_id
+        timestamp fecha_ultimo_intento
+    }

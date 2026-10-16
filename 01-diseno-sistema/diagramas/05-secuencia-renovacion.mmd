@@ -1,0 +1,40 @@
+sequenceDiagram
+    autonumber
+    participant CRON as Scheduler<br/>(cada réplica de Pólizas)
+    participant LOCK as ShedLock<br/>(tabla en BD Pólizas)
+    participant DBP as BD Pólizas
+    participant K as Kafka
+    participant NOTI as Servicio de Notificaciones
+    participant PROV as Proveedores correo / SMS
+    participant AC as Adapter CORE
+
+    CRON->>LOCK: 02:00 America/Bogota · adquirir "renovacion-diaria"
+    alt otra réplica ya tiene el lock
+        LOCK-->>CRON: rechazado → esta réplica no hace nada
+    else lock adquirido (lockAtMostFor = 30 min)
+        LOCK-->>CRON: OK
+        CRON->>DBP: SELECT pólizas ACTIVA o RENOVADA<br/>con fecha_fin ≤ hoy + N días<br/>y sin renovación para la próxima vigencia (por lotes)
+        loop por cada póliza · transacción independiente
+            rect rgb(238, 248, 241)
+                Note right of CRON: canon × (1 + IPC vigente)<br/>prima = canon × meses<br/>nueva vigencia = [fin anterior, fin + meses]
+                CRON->>DBP: INSERT HISTORIAL_RENOVACION<br/>(UK poliza_id + nueva_fecha_inicio)
+                alt la UK ya existe
+                    DBP-->>CRON: violación de UK → ya renovada: se omite (idempotente)
+                else primera vez
+                    CRON->>DBP: UPDATE POLIZA (version) · estado RENOVADA · sync PENDIENTE
+                    CRON->>DBP: INSERT EVENTO_OUTBOX PolizaRenovada
+                end
+            end
+        end
+        CRON->>LOCK: liberar lock · métricas renovadas / omitidas / fallidas
+    end
+
+    Note over DBP,K: El relay del outbox publica PolizaRenovada (key = polizaId)
+    par notificación
+        K->>NOTI: PolizaRenovada
+        Note right of NOTI: si ya existe NOTIFICACION<br/>para evento_id + canal → omitir
+        NOTI->>PROV: correo y SMS con nuevo canon, prima y vigencia
+    and sincronización con el CORE
+        K->>AC: PolizaRenovada
+        Note left of AC: edición idempotente en WebLogic<br/>(ver diagrama 6)
+    end

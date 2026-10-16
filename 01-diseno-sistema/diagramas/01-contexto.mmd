@@ -1,0 +1,31 @@
+flowchart TB
+    %% C4 Nivel 1 - Contexto del sistema
+
+    asesor["<b>Usuario interno</b><br/>Asesor o analista de la aseguradora<br/><i>Persona</i>"]
+    inmob["<b>Inmobiliaria o administración<br/>de copropiedad</b><br/>Tomador de pólizas colectivas<br/><i>Persona · supuesto: usa el mismo frontend con su rol</i>"]
+    asegurado["<b>Tomador / asegurado</b><br/>Arrendatario<br/><i>Persona · recibe notificaciones</i>"]
+
+    plataforma["<b>Plataforma de gestión de pólizas<br/>de arrendamiento</b><br/>Crea, consulta, modifica, renueva y cancela<br/>pólizas y riesgos<br/><i>Sistema a construir</i>"]
+
+    idp["<b>Proveedor de identidad</b><br/>OAuth2 / OpenID Connect<br/><i>Sistema externo</i>"]
+    mensajeria["<b>Proveedores de correo y SMS</b><br/>SMTP / API de mensajería<br/><i>Sistema externo</i>"]
+    weblogic["<b>Capa media WebLogic</b><br/>Servicio agnóstico de edición<br/><i>Sistema existente</i>"]
+    core["<b>CORE transaccional</b><br/>Sistema legado de pólizas<br/><i>Sistema existente</i>"]
+
+    asesor -- "Gestiona pólizas<br/>y riesgos [HTTPS]" --> plataforma
+    inmob -- "Gestiona pólizas<br/>colectivas [HTTPS]" --> plataforma
+    plataforma -- "Valida identidad<br/>y tokens" --> idp
+    plataforma -- "Solicita envío de<br/>correo y SMS" --> mensajeria
+    mensajeria -- "Notifica creación<br/>y renovación" --> asegurado
+    plataforma -- "Toda modificación de estado<br/>[SOAP/XML o JSON]" --> weblogic
+    weblogic -- "Mantiene<br/>actualizado" --> core
+
+    classDef persona fill:#0a6b38,stroke:#064425,color:#ffffff
+    classDef sistema fill:#ffd31a,stroke:#f0bf00,color:#032616,stroke-width:3px
+    classDef externo fill:#f1f5f9,stroke:#64748b,color:#0f172a
+    classDef legado fill:#e2e8f0,stroke:#334155,color:#0f172a,stroke-dasharray: 5 3
+
+    class asesor,inmob,asegurado persona
+    class plataforma sistema
+    class idp,mensajeria externo
+    class weblogic,core legado

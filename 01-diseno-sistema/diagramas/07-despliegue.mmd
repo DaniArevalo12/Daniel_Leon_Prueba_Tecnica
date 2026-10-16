@@ -1,0 +1,54 @@
+flowchart TB
+    %% Despliegue de referencia para disponibilidad 24/7 (agnóstico de nube)
+
+    usuarios["Usuarios"]
+    lb["<b>Balanceador global + WAF</b><br/>TLS · protección DDoS"]
+
+    subgraph region["Región principal"]
+        direction TB
+        subgraph k8s["Clúster Kubernetes · nodos en 3 zonas"]
+            direction LR
+            subgraph za["Zona A"]
+                direction TB
+                gwa["Gateway"]
+                sva["Pólizas · Riesgos<br/>Notificaciones · Adapter"]
+                ka[("Kafka broker 1")]
+            end
+            subgraph zb["Zona B"]
+                direction TB
+                gwb["Gateway"]
+                svb["Pólizas · Riesgos<br/>Notificaciones · Adapter"]
+                kb[("Kafka broker 2")]
+            end
+            subgraph zc["Zona C"]
+                direction TB
+                gwc["Gateway"]
+                svc["Pólizas · Riesgos<br/>Notificaciones · Adapter"]
+                kc[("Kafka broker 3")]
+            end
+        end
+        subgraph oracle["Oracle"]
+            direction LR
+            primaria[("Primaria<br/>Zona A")]
+            standby[("Standby síncrona<br/>Zona B · Data Guard")]
+        end
+    end
+
+    subgraph dr["Sitio de recuperación (DR)"]
+        standbydr[("Standby asíncrona<br/>Data Guard")]
+        respaldos[("Respaldos RMAN<br/>cifrados e inmutables")]
+    end
+
+    usuarios --> lb
+    lb --> gwa & gwb & gwc
+    sva & svb & svc --> primaria
+    primaria -- "redo síncrono" --> standby
+    primaria -- "redo asíncrono" --> standbydr
+    primaria -. "respaldo diario + archivelogs" .-> respaldos
+
+    classDef zona fill:#eef8f1,stroke:#0a6b38,color:#0f172a
+    classDef bd fill:#ffd31a,stroke:#0a6b38,color:#032616
+    classDef ext fill:#f1f5f9,stroke:#64748b,color:#0f172a
+    class gwa,gwb,gwc,sva,svb,svc zona
+    class ka,kb,kc,primaria,standby,standbydr,respaldos bd
+    class usuarios,lb ext

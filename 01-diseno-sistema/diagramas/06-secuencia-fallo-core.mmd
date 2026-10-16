@@ -1,0 +1,41 @@
+sequenceDiagram
+    autonumber
+    participant K as Kafka
+    participant AC as Adapter CORE<br/>(Resilience4j)
+    participant WL as WebLogic / CORE
+    participant DBC as BD Adapter CORE
+    participant POL as Servicio dueño<br/>(Pólizas o Riesgos)
+    participant OPS as Alertas / soporte
+
+    K->>AC: PolizaCancelada (eventId = idempotency key)
+    AC->>DBC: AUDITORIA_CORE estado ENVIADO
+
+    alt A · Fallo técnico (timeout, conexión rechazada, 5xx)
+        AC->>WL: editar · Idempotency-Key = eventId · timeout 3 s
+        WL--xAC: timeout o 503
+        loop reintentos con backoff exponencial + jitter (1 s · 5 s · 30 s · 2 min · 10 min)
+            AC->>K: reprograma en core.reintentos
+            K->>AC: reintento N
+            AC->>WL: misma Idempotency-Key → el CORE no duplica la edición
+        end
+        Note over AC,WL: Si la tasa de fallos supera el umbral, el circuit breaker se ABRE:<br/>no se llama a WebLogic y el consumo se pausa.<br/>En HALF_OPEN se prueba con pocas llamadas: si responden, se CIERRA.
+        alt se recupera antes del máximo de intentos
+            WL-->>AC: OK
+            AC->>K: CoreSincronizado → POL marca SINCRONIZADO
+        else se agotan los intentos
+            AC->>K: publica en core.dlq (evento + causa)
+            AC->>DBC: AUDITORIA_CORE estado DLQ
+            AC->>OPS: alerta · core_dlq_total > 0
+            Note left of POL: estado_sync_core sigue PENDIENTE<br/>(visible para el usuario).<br/>Soporte reprocesa la DLQ<br/>cuando el CORE se recupera.
+        end
+    else B · Rechazo de negocio del CORE (respuesta funcional de error)
+        AC->>WL: editar · Idempotency-Key = eventId
+        WL-->>AC: rechazo con código funcional
+        Note over AC: Sin reintento: repetir no cambiaría el resultado
+        AC->>DBC: AUDITORIA_CORE estado RECHAZADO + código
+        AC->>K: CoreRechazado (agregado, id, motivo)
+        K->>POL: consume CoreRechazado
+        Note left of POL: compensación (saga):<br/>revierte si hay snapshot<br/>o marca estado_sync_core = RECHAZADO
+        POL->>K: evento de compensación → notificación interna
+        POL->>OPS: alerta para gestión manual
+    end

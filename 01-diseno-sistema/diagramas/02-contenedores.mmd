@@ -1,0 +1,73 @@
+flowchart LR
+    %% C4 Nivel 2 - Contenedores. Amarillo con borde grueso = componentes obligatorios del enunciado.
+
+    usuarios["<b>Usuarios</b><br/>asesores e inmobiliarias"]
+    spa["<b>Frontend Angular</b><br/>SPA en nginx / CDN"]
+    idp["<b>IdP</b><br/>OAuth2 / OIDC"]
+    gw["<b>API Gateway</b><br/>OIDC · rate limiting · /v1"]
+
+    subgraph sp["Servicio de Pólizas"]
+        direction TB
+        pol["<b>Servicio de Pólizas</b><br/>CRUD · renovar · cancelar<br/>scheduler de renovación<br/>outbox relay"]
+        dbpol[("<b>BD Pólizas</b><br/>póliza · persona<br/>historial · outbox")]
+        pol --- dbpol
+    end
+
+    subgraph sr["Servicio de Riesgos"]
+        direction TB
+        rie["<b>Servicio de Riesgos</b><br/>agregar · cancelar<br/>proyección de póliza<br/>outbox relay"]
+        dbrie[("<b>BD Riesgos</b><br/>riesgo · proyección<br/>outbox")]
+        rie --- dbrie
+    end
+
+    subgraph sn["Servicio de Notificaciones"]
+        direction TB
+        noti["<b>Servicio de<br/>Notificaciones</b><br/>correo y SMS<br/>idempotentes"]
+        dbnot[("<b>BD Notificaciones</b><br/>notificación")]
+        noti --- dbnot
+    end
+
+    subgraph sa["Adapter CORE"]
+        direction TB
+        acore["<b>Adapter CORE</b><br/>Anti-Corruption Layer<br/>Resilience4j<br/>idempotency key"]
+        dbcore[("<b>BD Adapter</b><br/>auditoría CORE")]
+        acore --- dbcore
+    end
+
+    kafka{{"<b>Kafka</b><br/>polizas.eventos · riesgos.eventos<br/>core.resultados · core.reintentos · core.dlq"}}
+
+    proveedores["<b>Proveedores</b><br/>correo y SMS"]
+    weblogic["<b>Capa media WebLogic</b><br/>servicio de edición"]
+    core["<b>CORE legado</b>"]
+    obs["<b>Observabilidad</b><br/>recibe logs, métricas y trazas<br/>de todos los servicios<br/>OpenTelemetry · Prometheus<br/>Grafana · Loki · Tempo"]
+
+    usuarios -- HTTPS --> spa
+    spa -- "REST /api/v1 · Bearer" --> gw
+    gw -. "valida token" .-> idp
+    gw -- REST --> pol
+    gw -- REST --> rie
+
+    pol <-- "publica y consume" --> kafka
+    rie <-- "publica y consume" --> kafka
+    kafka -- "PolizaCreada<br/>PolizaRenovada" --> noti
+    kafka <-- "cambios de estado /<br/>resultados" --> acore
+
+    noti --> proveedores
+    acore -- "edición idempotente" --> weblogic
+    weblogic --> core
+
+    kafka ~~~ obs
+
+    classDef obligatorio fill:#ffd31a,stroke:#0a6b38,color:#032616,stroke-width:4px
+    classDef soporte fill:#eef8f1,stroke:#0a6b38,color:#0f172a
+    classDef externo fill:#f1f5f9,stroke:#64748b,color:#0f172a
+    classDef legado fill:#e2e8f0,stroke:#334155,color:#0f172a,stroke-dasharray: 5 3
+
+    class gw,pol,rie,noti,acore,dbpol,dbrie,dbnot,dbcore obligatorio
+    class spa,kafka,obs soporte
+    class usuarios,idp,proveedores externo
+    class weblogic,core legado
+    style sp fill:#ffffff,stroke:#94a3b8
+    style sr fill:#ffffff,stroke:#94a3b8
+    style sn fill:#ffffff,stroke:#94a3b8
+    style sa fill:#ffffff,stroke:#94a3b8

@@ -1,0 +1,41 @@
+sequenceDiagram
+    autonumber
+    actor U as Usuario (Frontend)
+    participant GW as API Gateway
+    participant RIE as Servicio de Riesgos
+    participant DBR as BD Riesgos
+    participant K as Kafka
+    participant AC as Adapter CORE
+    participant WL as WebLogic / CORE
+
+    U->>GW: POST /api/v1/polizas/{id}/riesgos<br/>Bearer token · Idempotency-Key · X-Correlation-Id
+    GW->>GW: valida token OIDC, rol y rate limit
+    GW->>RIE: reenvía con traceparent y X-Correlation-Id
+    RIE->>DBR: lee POLIZA_PROYECCION (tipo, estado)
+
+    alt póliza INDIVIDUAL
+        RIE-->>U: 422 ProblemDetail (regla de negocio)
+    else póliza CANCELADA
+        RIE-->>U: 409 ProblemDetail (conflicto de estado)
+    else COLECTIVA activa o renovada
+        rect rgb(238, 248, 241)
+            Note over RIE,DBR: Una sola transacción local
+            RIE->>DBR: INSERT RIESGO (estado_sync_core = PENDIENTE)
+            RIE->>DBR: INSERT EVENTO_OUTBOX RiesgoAgregado
+        end
+        RIE-->>U: 201 Created · estadoSincronizacion = PENDIENTE
+    end
+
+    Note over RIE,WL: Asíncrono: el usuario ya tiene respuesta
+
+    RIE->>DBR: relay lee outbox PENDIENTE (SKIP LOCKED)
+    RIE->>K: publica RiesgoAgregado (key = polizaId)
+    RIE->>DBR: marca outbox PUBLICADO
+    K->>AC: consume RiesgoAgregado
+    AC->>AC: traduce al contrato de WebLogic (ACL)
+    AC->>WL: editar riesgo · Idempotency-Key = id del evento
+    WL-->>AC: OK
+    AC->>K: CoreSincronizado (RIESGO, id)
+    K->>RIE: consume resultado
+    RIE->>DBR: UPDATE RIESGO estado_sync_core = SINCRONIZADO
+    Note over U,RIE: El frontend muestra la etiqueta "Sincronizado con CORE" al refrescar
