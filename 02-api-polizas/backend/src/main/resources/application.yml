@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: api-polizas
+  datasource:
+    # H2 en memoria en modo Oracle: mismas migraciones que en el perfil "oracle"
+    url: jdbc:h2:mem:polizas;MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none   # el esquema lo gobierna exclusivamente Flyway (ver DECISIONES.md)
+  flyway:
+    locations: classpath:db/migration
+
+server:
+  port: 8080
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+    include-exception: false
+
+polizas:
+  renovacion:
+    ipc: 0.0520   # IPC anual aplicado al canon en la renovación (5.20 %)
+
+seguridad:
+  api-key: ${API_KEY:123456}
+  cors:
+    origenes-permitidos: http://localhost:4200
+
+core:
+  base-url: http://localhost:${server.port}
+  timeout-conexion: 2s
+  timeout-lectura: 3s
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  charset:
+    console: UTF-8
+  pattern:
+    # Spring Boot inserta este patrón en su formato por defecto; el valor sale del MDC (CorrelationIdFilter)
+    correlation: "[cid=%X{correlationId:-}] "

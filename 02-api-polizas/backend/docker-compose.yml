@@ -1,0 +1,40 @@
+# API de pólizas + Oracle Database Free.
+# Uso: docker compose up --build
+# Variables opcionales: API_PORT (puerto en el host, por defecto 8080), API_KEY, ORACLE_PASSWORD, DB_PASSWORD
+name: api-polizas
+
+services:
+  oracle:
+    image: gvenzl/oracle-free:23-slim
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD:-oracle}
+      # La imagen crea este usuario de aplicación en FREEPDB1 al iniciar por primera vez
+      APP_USER: polizas
+      APP_USER_PASSWORD: ${DB_PASSWORD:-polizas}
+    ports:
+      - "1521:1521"
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  api:
+    build: .
+    depends_on:
+      oracle:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: oracle,json
+      DB_URL: jdbc:oracle:thin:@oracle:1521/FREEPDB1
+      DB_USERNAME: polizas
+      DB_PASSWORD: ${DB_PASSWORD:-polizas}
+      API_KEY: ${API_KEY:-123456}
+    ports:
+      - "${API_PORT:-8080}:8080"
+
+volumes:
+  oracle-data:

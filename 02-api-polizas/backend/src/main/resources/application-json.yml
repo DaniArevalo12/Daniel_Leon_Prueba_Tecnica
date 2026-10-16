@@ -1,0 +1,6 @@
+# Logs estructurados en JSON (formato Elastic Common Schema), listos para un agregador de logs.
+# El correlationId del MDC se incluye automáticamente como campo del evento.
+logging:
+  structured:
+    format:
+      console: ecs
