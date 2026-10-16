@@ -1,0 +1,38 @@
+# Sirve la SPA y reenvía /api al backend (mismo origen para el navegador: no se depende de CORS).
+# Solo se sustituye ${BACKEND_URL}; las variables propias de nginx (como $host) se conservan.
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    server_tokens off;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # /api/polizas -> ${BACKEND_URL}/polizas (la barra final de proxy_pass elimina el prefijo /api)
+    location /api/ {
+        proxy_pass ${BACKEND_URL}/;
+        # El navegador habla con nginx en el mismo origen: CORS no aplica. Chrome envía Origin incluso
+        # en POST del mismo origen; si llegara al backend, su filtro CORS lo rechazaría (403) cuando
+        # el frontend se publica en un host/puerto distinto a los orígenes permitidos.
+        proxy_set_header Origin "";
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 30s;
+    }
+
+    # Archivos con hash en el nombre: se pueden cachear indefinidamente
+    location ~* \.(?:js|css|woff2?|png|jpe?g|svg|ico)$ {
+        expires 1y;
+        access_log off;
+    }
+
+    # Rutas de la SPA (/polizas/4) devuelven index.html; index.html nunca se cachea
+    location / {
+        try_files $uri $uri/ /index.html;
+        expires -1;
+    }
+}
