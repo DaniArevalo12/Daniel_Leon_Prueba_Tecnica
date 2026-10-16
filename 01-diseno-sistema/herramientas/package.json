@@ -1,12 +1,13 @@
 {
   "name": "diseno-sistema-herramientas",
   "private": true,
-  "description": "Exporta los diagramas Mermaid a SVG/PNG y genera los PDF de ARQUITECTURA y de las respuestas de los módulos 3, 4 y 5",
+  "description": "Exporta los diagramas Mermaid a SVG/PNG y genera los PDF de ARQUITECTURA, del módulo 2 y de las respuestas de los módulos 3, 4 y 5",
   "scripts": {
     "diagramas": "node exportar-diagramas.mjs",
     "pdf": "node generar-pdf.mjs",
     "todo": "npm run diagramas && npm run pdf && npm run respuestas",
-    "respuestas": "node generar-pdf.mjs ../../03-base-datos/RESPUESTA.md --compacto && node generar-pdf.mjs ../../04-versionamiento/RESPUESTA.md --compacto && node generar-pdf.mjs ../../05-liderazgo/RESPUESTA.md --compacto"
+    "respuestas": "node generar-pdf.mjs ../../03-base-datos/RESPUESTA.md --compacto && node generar-pdf.mjs ../../04-versionamiento/RESPUESTA.md --compacto && node generar-pdf.mjs ../../05-liderazgo/RESPUESTA.md --compacto",
+    "pdf-api": "node generar-pdf.mjs ../../02-api-polizas/README.md --compacto"
   },
   "devDependencies": {
     "@mermaid-js/mermaid-cli": "^12.0.0",
