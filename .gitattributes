@@ -1,0 +1,10 @@
+# Finales de línea estables en cualquier sistema operativo
+*.sh   text eol=lf
+mvnw   text eol=lf
+*.cmd  text eol=crlf
+
+# Binarios
+*.png  binary
+*.pdf  binary
+*.ico  binary
+*.jar  binary
