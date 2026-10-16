@@ -56,7 +56,8 @@ docker compose up -d oracle
 ## Pruebas y cobertura
 
 ```bash
-./mvnw verify
+./mvnw verify          # Linux / macOS / Git Bash
+mvnw.cmd verify        # Windows (cmd / PowerShell)
 ```
 
 - Ejecuta 96 pruebas (unitarias de dominio y servicios, de repositorio y de integración con MockMvc).

@@ -121,7 +121,7 @@ Abreviaturas de rutas: `be` = `02-api-polizas/backend/src/main/java/com/segurosb
 | Para | Necesita |
 |---|---|
 | Ver todo con Docker | Docker Desktop |
-| Backend local | JDK 17 (Maven no hace falta: se usa `./mvnw`) |
+| Backend local | JDK 17 (Maven no hace falta: se usa `./mvnw`, o `mvnw.cmd` en Windows) |
 | Frontend local | Node.js 20.19+ o 22.12+ y npm 10+ |
 | Demo de Oracle (Módulo 3) | Docker Desktop |
 | Regenerar diagramas y PDF | Node.js (`cd 01-diseno-sistema/herramientas && npm ci && npm run todo`) |
