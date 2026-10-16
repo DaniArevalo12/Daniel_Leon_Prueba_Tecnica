@@ -1,0 +1,58 @@
+
+=== 1. Estado inicial en main ===
+67cad8e feat: autenticación inicial
+
+=== 2. Trabajo en feature/new-login ===
+9fe0053 feat(login): opción recordar sesión
+e97dccd feat(login): nuevo diseño de la pantalla de login
+67cad8e feat: autenticación inicial
+
+=== 3. Mientras tanto, main recibe tres commits (solo uno es el fix de seguridad) ===
+44c3d40 chore: actualización de dependencias (NO debe llegar a la feature)
+652393c fix(security): rechazar tokens expirados (CVE interno SEC-123)
+e38d8ad feat(reportes): módulo de reportes (NO debe llegar a la feature)
+67cad8e feat: autenticación inicial
+
+=== 4. Identificar el commit del fix en main (por mensaje) ===
+652393c fix(security): rechazar tokens expirados (CVE interno SEC-123)
+
+ auth.js | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+=== 5. Aplicar SOLO el fix en la feature: git cherry-pick -x ===
+[feature/new-login e754cbe] fix(security): rechazar tokens expirados (CVE interno SEC-123)
+ Date: Thu Oct 15 22:20:01 2026 -0500
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+* e754cbe fix(security): rechazar tokens expirados (CVE interno SEC-123)
+* 9fe0053 feat(login): opción recordar sesión
+* e97dccd feat(login): nuevo diseño de la pantalla de login
+| * 44c3d40 chore: actualización de dependencias (NO debe llegar a la feature)
+| * 652393c fix(security): rechazar tokens expirados (CVE interno SEC-123)
+| * e38d8ad feat(reportes): módulo de reportes (NO debe llegar a la feature)
+|/  
+* 67cad8e feat: autenticación inicial
+
+=== 6. Verificación ===
+  [OK] la feature tiene el fix de seguridad
+  [OK] la feature NO tiene reportes.js (cambio no relacionado de main)
+  [OK] la feature NO tiene package.json (cambio no relacionado de main)
+  [OK] el trabajo propio de la feature se conserva
+  [OK] trazabilidad: el mensaje referencia el commit original (-x)
+
+=== 7. Más adelante: integrar la feature en main (¿se duplica el fix?) ===
+git cherry main feature/new-login  ('-' = cambio equivalente ya presente en main):
++ e97dccd7ab9a401f748766778cc52ba5c29a7dd7 feat(login): nuevo diseño de la pantalla de login
++ 9fe0053beebb35b415dc4cace40626d903a6b05c feat(login): opción recordar sesión
+- e754cbe6ce4a7d6f7c91f7286d1cf26ff10f0b72 fix(security): rechazar tokens expirados (CVE interno SEC-123)
+  [OK] merge sin conflictos: Git reconoce que el fix ya está aplicado
+Ocurrencias de la línea del fix en auth.js de main: 1
+*   02abc1b Merge feature/new-login
+|\  
+| * e754cbe fix(security): rechazar tokens expirados (CVE interno SEC-123)
+| * 9fe0053 feat(login): opción recordar sesión
+| * e97dccd feat(login): nuevo diseño de la pantalla de login
+* | 44c3d40 chore: actualización de dependencias (NO debe llegar a la feature)
+* | 652393c fix(security): rechazar tokens expirados (CVE interno SEC-123)
+* | e38d8ad feat(reportes): módulo de reportes (NO debe llegar a la feature)
+|/  
+* 67cad8e feat: autenticación inicial
