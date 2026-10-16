@@ -80,5 +80,5 @@ Desarrollé esta prueba con un asistente de IA y revisé y verifiqué cada entre
 | CI con *quality gate* | JaCoCo hace fallar el build del backend si la cobertura de líneas baja del 80 % (96 pruebas) |
 | ADRs | `DECISIONES.md` en backend y frontend: cada decisión con su alternativa descartada y los supuestos tomados |
 | Pruebas más allá de las unitarias | Las pruebas e2e con Playwright encontraron **3 defectos reales** que las unitarias no detectaban (recarga tras un 409, un 403 de CORS detrás de nginx y la zona horaria del contenedor) |
-| IA con revisión humana | Todo lo generado se verificó con build, pruebas, capturas revisadas y mediciones reales (por ejemplo, los planes de ejecución del Módulo 3) |
+| IA con revisión humana | Todo lo generado se verificó con build, pruebas, revisiones visuales en el navegador y mediciones reales (por ejemplo, los planes de ejecución del Módulo 3) |
 | Honestidad sobre el estado | El diseño (Módulo 1) distingue en una tabla lo implementado, lo simplificado y lo propuesto |

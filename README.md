@@ -24,7 +24,9 @@ docker compose up --build
 
 Si los puertos están ocupados: `WEB_PORT=4300 API_PORT=8082 docker compose up --build`. Para detener: `docker compose down`.
 
-**Capturas del frontend:** [listado](02-api-polizas/frontend/docs/capturas/01-listado.png) · [detalle](02-api-polizas/frontend/docs/capturas/02-detalle.png) · [creación colectiva](02-api-polizas/frontend/docs/capturas/03-creacion-colectiva.png) · [renovación](02-api-polizas/frontend/docs/capturas/04-renovacion.png) · [error 409 con código de seguimiento](02-api-polizas/frontend/docs/capturas/05-error-409.png)
+## Entregable
+
+Los cinco módulos en un documento único: **[Daniel_Leon_Prueba_Tecnica.pdf](Daniel_Leon_Prueba_Tecnica.pdf)**. El código del Módulo 2 está en [github.com/DaniArevalo12/Daniel_Leon_Prueba_Tecnica](https://github.com/DaniArevalo12/Daniel_Leon_Prueba_Tecnica) (se regenera con `cd 01-diseno-sistema/herramientas && npm run entregable`).
 
 ## Índice de módulos
 
@@ -96,7 +98,7 @@ Abreviaturas de rutas: `be` = `02-api-polizas/backend/src/main/java/com/segurosb
 | Estados de carga, vacío y error; diseño responsive y accesible | `fe/shared/components/` | Reglas ESLint de accesibilidad y contraste AA verificado |
 | Pruebas | `*.spec.ts` (80) · `frontend/e2e/` (Playwright, 10) | Los e2e encontraron 3 defectos reales, ya corregidos |
 | Dockerfile multi-stage con nginx y compose de backend + frontend | `frontend/Dockerfile` · `02-api-polizas/docker-compose.yml` | Cabeceras de seguridad en nginx |
-| README y DECISIONES | `frontend/README.md` · `frontend/DECISIONES.md` | Capturas generadas por Playwright |
+| README y DECISIONES | `frontend/README.md` · `frontend/DECISIONES.md` | Recorridos e2e sobre la aplicación real (Playwright) |
 
 ### Módulos 3, 4 y 5
 
@@ -133,7 +135,7 @@ Instrucciones detalladas: [backend](02-api-polizas/backend/README.md) · [fronte
 Desarrollé esta prueba con **Claude Code** como asistente para generar, revisar y verificar código y documentación. Así lo trabajé:
 
 - **Yo definí los requisitos y las restricciones** de cada módulo y **aprobé cada plan antes de implementarlo**. Varias decisiones las ajusté sobre la propuesta del asistente: Java 17, el contrato `evento` + `operacion` hacia el CORE, la consistencia eventual entre Pólizas y Riesgos con estado de sincronización, y la escala de la demo de Oracle, entre otras.
-- **Nada se dio por bueno sin verificación:** builds y pruebas en cada fase, recorridos e2e en el navegador, capturas revisadas, planes de ejecución medidos en Oracle y una prueba final desde cero del paquete entregado. Esa verificación encontró y corrigió defectos reales (descritos en `frontend/DECISIONES.md` §7).
+- **Nada se dio por bueno sin verificación:** builds y pruebas en cada fase, recorridos e2e en el navegador, revisiones visuales, planes de ejecución medidos en Oracle y una prueba final desde cero del paquete entregado. Esa verificación encontró y corrigió defectos reales (descritos en `frontend/DECISIONES.md` §7).
 - **[CLAUDE.md](CLAUDE.md)** contiene las convenciones que le di al asistente: idioma, arquitectura, reglas de código y de pruebas.
 - Puedo explicar y defender cada decisión; las alternativas descartadas están documentadas en los `DECISIONES.md`.
 

@@ -9,8 +9,7 @@
     "test": "ng test --watch=false",
     "lint": "ng lint",
     "test:watch": "ng test",
-    "e2e": "playwright test --project=chromium",
-    "e2e:capturas": "playwright test --project=capturas"
+    "e2e": "playwright test --project=chromium"
   },
   "private": true,
   "dependencies": {

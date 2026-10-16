@@ -3,7 +3,6 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * Pruebas end-to-end contra la aplicación y el backend reales (deben estar en ejecución).
  *   npm run e2e            → flujos funcionales
- *   npm run e2e:capturas   → regenera las capturas de docs/capturas/
  */
 export default defineConfig({
   testDir: './e2e',
@@ -23,13 +22,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      testIgnore: /capturas\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'capturas',
-      testMatch: /capturas\.spec\.ts/,
-      use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 } },
     },
   ],
 });

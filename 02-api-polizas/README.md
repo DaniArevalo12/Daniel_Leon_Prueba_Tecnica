@@ -75,10 +75,6 @@ Cada petición recibe un `correlationId` que se devuelve en la respuesta, aparec
 
 SPA Angular 21 (standalone, *zoneless* y *signals*) que consume la API a través del proxy `/api` (el navegador nunca conoce la URL del backend).
 
-| Listado | Detalle |
-|---|---|
-| ![Listado de pólizas](frontend/docs/capturas/01-listado.png) | ![Detalle de póliza](frontend/docs/capturas/02-detalle.png) |
-
 - **Listado** con filtros por tipo y estado (los filtros van en la URL, se pueden compartir).
 - **Detalle** con datos, vigencia, canon, prima y tabla de riesgos; acciones según el estado y el tipo.
 - **Creación** de INDIVIDUAL (un riesgo) y COLECTIVA (`FormArray`, 0..n) con prima estimada y errores 400 del backend en cada campo.

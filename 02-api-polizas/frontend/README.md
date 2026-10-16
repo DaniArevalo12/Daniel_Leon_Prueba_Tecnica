@@ -4,18 +4,6 @@ Interfaz web en Angular 21 para consultar, crear, renovar y cancelar pólizas de
 
 Las decisiones de diseño y sus alternativas descartadas están en [DECISIONES.md](DECISIONES.md).
 
-| Listado | Detalle |
-|---|---|
-| ![Listado de pólizas](docs/capturas/01-listado.png) | ![Detalle de póliza](docs/capturas/02-detalle.png) |
-
-| Creación colectiva | Renovación |
-|---|---|
-| ![Creación de póliza colectiva](docs/capturas/03-creacion-colectiva.png) | ![Resultado de la renovación](docs/capturas/04-renovacion.png) |
-
-| Error 409 con código de seguimiento |
-|---|
-| ![Toast de error 409](docs/capturas/05-error-409.png) |
-
 ## Requisitos
 
 | Herramienta | Versión |
@@ -99,7 +87,6 @@ Recorren la aplicación real en Chromium contra el backend real. Requieren el ba
 npx playwright install chromium     # solo la primera vez
 npm run e2e                         # contra http://localhost:4200
 E2E_BASE_URL=http://localhost:4300 npm run e2e   # p. ej. contra el contenedor
-npm run e2e:capturas                # además regenera las capturas de docs/capturas/
 ```
 
 Flujos cubiertos ([e2e/polizas.spec.ts](e2e/polizas.spec.ts)):
